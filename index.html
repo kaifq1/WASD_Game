@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Control Trainer</title>
+    <!-- Import a Pixel Font for that Minecraft feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --mc-green: #56ab2f;
+            --mc-dark-green: #3a7e1a;
+            --mc-brown: #8b5a2b;
+            --mc-dark-brown: #5c3c1e;
+            --mc-grey: #7f8c8d;
+            --mc-light-grey: #bdc3c7;
+            --mc-text: #ffffff;
+            --mc-dirt: #3e2723;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            /* Dirt texture pattern */
+            background-image: 
+                linear-gradient(45deg, #2a2a2a 25%, transparent 25%), 
+                linear-gradient(-45deg, #2a2a2a 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #2a2a2a 75%), 
+                linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: var(--mc-text);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .game-container {
+            background: rgba(0, 0, 0, 0.85);
+            border: 4px solid var(--mc-light-grey);
+            border-radius: 4px;
+            width: 90%;
+            max-width: 700px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        /* Header & Progress */
+        h1 {
+            font-size: 1.5rem;
+            color: var(--mc-green);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            text-shadow: 3px 3px 0px #000;
+            line-height: 1.5;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #333;
+            height: 24px;
+            margin-bottom: 30px;
+            border: 4px solid #000;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--mc-green);
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: inset 0 -4px 0 rgba(0,0,0,0.3);
+        }
+
+        /* Instructions */
+        .instruction-box {
+            background: var(--mc-brown);
+            padding: 25px;
+            border: 4px solid var(--mc-dark-brown);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            margin-bottom: 40px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Decorative corners for instruction box */
+        .instruction-box::after {
+            content: '';
+            position: absolute;
+            top: 4px; left: 4px; right: 4px; bottom: 4px;
+            border: 2px dashed rgba(255,255,255,0.1);
+            pointer-events: none;
+        }
+
+        .instruction-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            color: #fff;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .action-verb {
+            color: #f1c40f;
+            text-decoration: underline;
+        }
+
+        /* Input Visualization Area */
+        .input-deck {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        /* Keyboard Styles */
+        .keyboard-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .key {
+            width: 60px;
+            height: 60px;
+            background: #bdc3c7;
+            color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 6px solid #7f8c8d;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            transition: all 0.1s;
+            position: relative;
+        }
+
+        .key span {
+            z-index: 2;
+        }
+
+        /* 3D effect for keys */
+        .key::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: -6px;
+            background: inherit;
+            border-radius: 4px;
+            z-index: 1;
+        }
+
+        .key.active {
+            background: var(--mc-green);
+            color: white;
+            border-bottom: 0px solid var(--mc-dark-green);
+            transform: translateY(6px);
+            box-shadow: inset 0 3px 5px rgba(0,0,0,0.2);
+        }
+        
+        .key.active::before {
+            display: none;
+        }
+
+        .key.highlight {
+            animation: pulse-border 1.5s infinite;
+            background: #fff;
+        }
+
+        .key.space {
+            width: 300px;
+        }
+
+        /* Mouse Styles */
+        .mouse-area {
+            position: relative;
+            width: 80px;
+            height: 120px;
+            background: #bdc3c7;
+            border-radius: 30px;
+            border-bottom: 8px solid #7f8c8d;
+        }
+
+        .mouse-btn {
+            position: absolute;
+            top: 0;
+            width: 49%;
+            height: 40%;
+            background: #ecf0f1;
+            transition: background 0.1s;
+        }
+
+        .mouse-left {
+            left: 0;
+            border-top-left-radius: 30px;
+            border-right: 1px solid #bdc3c7;
+        }
+
+        .mouse-right {
+            right: 0;
+            border-top-right-radius: 30px;
+            border-left: 1px solid #bdc3c7;
+        }
+
+        .mouse-btn.active {
+            background: var(--mc-green);
+        }
+        
+        .mouse-btn.highlight {
+            background: #f1c40f;
+            animation: pulse-opacity 1s infinite;
+        }
+
+        .scroll-wheel {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 20px;
+            background: #2c3e50;
+            border-radius: 4px;
+        }
+
+        /* Animations */
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7); background: #ecf0f1; }
+            50% { box-shadow: 0 0 0 10px rgba(241, 196, 15, 0); background: #f1c40f; }
+            100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); background: #ecf0f1; }
+        }
+
+        @keyframes pulse-opacity {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes success-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); border-color: var(--mc-green); }
+            100% { transform: scale(1); }
+        }
+
+        .pop {
+            animation: success-pop 0.3s ease;
+        }
+
+        /* Overlays */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 4px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .btn-mc {
+            background: #7f8c8d;
+            border: 4px solid #fff;
+            color: #fff;
+            padding: 20px 40px;
+            font-family: 'Press Start 2P';
+            font-size: 1.2rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: inset -4px -4px 0px rgba(0,0,0,0.5);
+        }
+
+        .btn-mc:hover {
+            background: var(--mc-green);
+        }
+
+        .btn-mc:active {
+            box-shadow: inset 4px 4px 0px rgba(0,0,0,0.5);
+        }
+
+        .feedback-msg {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--mc-green);
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .feedback-msg.show {
+            opacity: 1;
+        }
+
+        /* Confetti for win */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f1c40f;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); }
+        }
+        
+        /* Test World Canvas */
+        canvas {
+            background: #7CB342;
+            border: 4px solid #555;
+            image-rendering: pixelated;
+            cursor: crosshair;
+        }
+        
+        .test-world-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        
+        .task-tooltip {
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.7rem;
+            position: absolute;
+            pointer-events: none;
+            display: none;
+            z-index: 10;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="game-wrapper">
+        <div class="game-container" id="game-container">
+            <div class="feedback-msg" id="feedback">Great Job!</div>
+            
+            <div class="progress-container">
+                <div class="progress-fill" id="progress-bar"></div>
+            </div>
+
+            <h1 id="level-title">Boot Camp</h1>
+
+            <div id="tutorial-ui">
+                <div class="instruction-box">
+                    <div class="instruction-text" id="prompt-text">Welcome, Recruit!</div>
+                </div>
+
+                <div class="input-deck">
+                    <!-- Visual Keyboard -->
+                    <div class="keyboard-area">
+                        <div class="row">
+                            <div class="key" id="key-q">Q</div>
+                            <div class="key" id="key-w">W</div>
+                            <div class="key" id="key-e">E</div>
+                        </div>
+                        <div class="row">
+                            <div class="key" id="key-a">A</div>
+                            <div class="key" id="key-s">S</div>
+                            <div class="key" id="key-d">D</div>
+                        </div>
+                        <div class="row">
+                            <div class="key space" id="key-space">SPACE</div>
+                        </div>
+                        <div class="row" style="margin-top:10px;">
+                            <div class="key" id="key-shift" style="width:100px; font-size: 0.8rem;">SHIFT</div>
+                        </div>
+                    </div>
+
+                    <!-- Visual Mouse -->
+                    <div class="mouse-area">
+                        <div class="mouse-btn mouse-left" id="mouse-left"></div>
+                        <div class="mouse-btn mouse-right" id="mouse-right"></div>
+                        <div class="scroll-wheel"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test World UI (Initially Hidden) -->
+            <div class="test-world-container" id="test-world-ui">
+                <div id="task-message" style="margin-bottom: 10px; color: #f1c40f; min-height: 20px;">Objective: Reach the Diamond!</div>
+                <div class="task-tooltip" id="tooltip">Action</div>
+                <canvas id="test-canvas" width="600" height="300"></canvas>
+                <div style="margin-top: 15px; font-size: 0.8rem; color: #bdc3c7;">
+                    Controls: <span style="color: #fff">WASD</span> Move | <span style="color: #fff">Click</span> Break/Build | <span style="color: #fff">Space</span> Jump | <span style="color: #fff">Shift</span> Sneak
+                </div>
+            </div>
+
+            <!-- Start Screen Overlay -->
+            <div class="overlay" id="start-screen">
+                <h1 style="color: white; margin-bottom: 40px;">Steve's Control<br>Boot Camp</h1>
+                <button class="btn-mc" onclick="startGame()">Start Training</button>
+            </div>
+
+            <!-- Success Screen Overlay -->
+            <div class="overlay hidden" id="success-screen">
+                <h1 style="color: var(--mc-green); margin-bottom: 20px;">Training Complete!</h1>
+                <div class="instruction-text" style="color: #ccc; font-size: 0.8rem; margin-bottom: 30px;">
+                    You are ready to enter the Practice World.
+                </div>
+                <button class="btn-mc" onclick="startTestMode()">Enter World</button>
+            </div>
+            
+            <!-- Final Win Screen Overlay -->
+            <div class="overlay hidden" id="win-screen">
+                <h1 style="color: #f1c40f; margin-bottom: 20px;">CHALLENGE COMPLETE!</h1>
+                <div class="instruction-text" style="color: #fff; font-size: 0.8rem; margin-bottom: 30px;">
+                    You have mastered the controls!
+                </div>
+                <button class="btn-mc" onclick="location.reload()">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let currentStepIndex = 0;
+        let waitingForInput = false;
+        let testMode = false;
+        let keysPressed = {};
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        // Canvas Test World State
+        let player = { 
+            x: 50, 
+            y: 135, 
+            size: 30, 
+            speed: 4, 
+            isJumping: false,
+            isSneaking: false,
+            jumpHeight: 0
+        };
+        
+        // Level Objects
+        const walls = [
+            { x: 150, y: 0, w: 40, h: 300, type: 'wood', active: true, label: "L-Click to Break" } // Breakable Wall
+        ];
+        
+        const pits = [
+            { x: 250, y: 0, w: 60, h: 300, type: 'lava', bridged: false, label: "R-Click to Build" } // Lava pit
+        ];
+        
+        const fences = [
+            { x: 380, y: 50, w: 20, h: 200, type: 'fence', label: "Space to Jump" } // Jumpable Fence
+        ];
+        
+        const sneakZones = [
+            { x: 450, y: 50, w: 80, h: 200, type: 'danger', label: "Shift to Sneak" } // Sleeping Dragon Zone
+        ];
+        
+        const goal = { x: 550, y: 135, w: 30, h: 30, type: 'diamond' };
+
+        // The Tutorial Curriculum
+        const steps = [
+            { text: "Let's start with movement.<br>Press <span class='action-verb'>W</span> to walk FORWARD.", target: 'w', type: 'key', highlight: 'key-w' },
+            { text: "There's a creeper! Back up!<br>Press <span class='action-verb'>S</span> to walk BACKWARD.", target: 's', type: 'key', highlight: 'key-s' },
+            { text: "Let's strafe left.<br>Press <span class='action-verb'>A</span> to walk LEFT.", target: 'a', type: 'key', highlight: 'key-a' },
+            { text: "Now strafe right.<br>Press <span class='action-verb'>D</span> to walk RIGHT.", target: 'd', type: 'key', highlight: 'key-d' },
+            { text: "There's a gap ahead.<br>Press <span class='action-verb'>SPACE</span> to JUMP.", target: ' ', type: 'key', highlight: 'key-space' },
+            { text: "You see a tree. Let's get wood.<br><span class='action-verb'>LEFT CLICK</span> to BREAK blocks.", target: 0, type: 'mouse', highlight: 'mouse-left' },
+            { text: "Let's build a shelter.<br><span class='action-verb'>RIGHT CLICK</span> to PLACE blocks.", target: 2, type: 'mouse', highlight: 'mouse-right' },
+            { text: "Check your backpack.<br>Press <span class='action-verb'>E</span> to open INVENTORY.", target: 'e', type: 'key', highlight: 'key-e' },
+            { text: "Sneak over the edge.<br>Hold <span class='action-verb'>SHIFT</span> to SNEAK.", target: 'Shift', type: 'key', highlight: 'key-shift' },
+             { text: "Close Inventory / Menu.<br>Press <span class='action-verb'>Q</span> to drop item (Careful!).", target: 'q', type: 'key', highlight: 'key-q' }
+        ];
+
+        // UI Elements
+        const promptText = document.getElementById('prompt-text');
+        const progressBar = document.getElementById('progress-bar');
+        const startScreen = document.getElementById('start-screen');
+        const successScreen = document.getElementById('success-screen');
+        const winScreen = document.getElementById('win-screen');
+        const feedback = document.getElementById('feedback');
+        const gameContainer = document.getElementById('game-container');
+        const tutorialUI = document.getElementById('tutorial-ui');
+        const testWorldUI = document.getElementById('test-world-ui');
+        const canvas = document.getElementById('test-canvas');
+        const ctx = canvas.getContext('2d');
+        const tooltip = document.getElementById('tooltip');
+        const taskMsg = document.getElementById('task-message');
+
+        // Sounds
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playBeep(frequency = 440, type = 'square', duration = 0.1) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        function playBreakSound() {
+            playBeep(100, 'sawtooth', 0.05);
+            setTimeout(() => playBeep(80, 'sawtooth', 0.05), 50);
+        }
+        
+        function playBuildSound() {
+            playBeep(400, 'square', 0.05);
+        }
+        
+        function playJumpSound() {
+            playBeep(300, 'sine', 0.2);
+            setTimeout(() => playBeep(450, 'sine', 0.2), 50);
+        }
+
+        function playSuccessSound() {
+            playBeep(523.25, 'triangle'); 
+            setTimeout(() => playBeep(659.25, 'triangle'), 100);
+            setTimeout(() => playBeep(783.99, 'triangle'), 200);
+        }
+
+        // --- Tutorial Logic ---
+        function startGame() {
+            startScreen.classList.add('hidden');
+            loadStep(0);
+        }
+
+        function loadStep(index) {
+            if (index >= steps.length) {
+                gameComplete();
+                return;
+            }
+            currentStepIndex = index;
+            const step = steps[index];
+            promptText.innerHTML = step.text;
+            waitingForInput = true;
+            const progress = (index / steps.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+            const highlightEl = document.getElementById(step.highlight);
+            if (highlightEl) highlightEl.classList.add('highlight');
+        }
+
+        function handleInput(inputVal, type) {
+            if (!waitingForInput) return;
+            const step = steps[currentStepIndex];
+            let isCorrect = false;
+            if (step.type === type) {
+                if (type === 'key' && inputVal.toLowerCase() === step.target.toLowerCase()) isCorrect = true;
+                else if (type === 'mouse' && inputVal === step.target) isCorrect = true;
+            }
+
+            if (isCorrect) {
+                successEffect();
+            } else {
+                playBeep(150, 'sawtooth');
+            }
+        }
+
+        function successEffect() {
+            waitingForInput = false;
+            playSuccessSound();
+            const el = document.getElementById(steps[currentStepIndex].highlight);
+            if(el) el.classList.remove('highlight');
+            gameContainer.classList.add('pop');
+            feedback.classList.add('show');
+            setTimeout(() => {
+                gameContainer.classList.remove('pop');
+                feedback.classList.remove('show');
+                loadStep(currentStepIndex + 1);
+            }, 500);
+        }
+
+        function gameComplete() {
+            progressBar.style.width = '100%';
+            successScreen.classList.remove('hidden');
+            createConfetti();
+        }
+
+        // --- Test World Logic ---
+
+        function startTestMode() {
+            testMode = true;
+            successScreen.classList.add('hidden');
+            tutorialUI.style.display = 'none';
+            testWorldUI.style.display = 'flex';
+            document.getElementById('level-title').innerText = "Obstacle Course";
+            requestAnimationFrame(gameLoop);
+        }
+
+        function rectIntersect(r1, r2) {
+            return !(r2.x > r1.x + r1.w || 
+                     r2.x + r2.w < r1.x || 
+                     r2.y > r1.y + r1.h || 
+                     r2.y + r2.h < r1.y);
+        }
+        
+        function getPlayerRect() {
+            return { x: player.x, y: player.y, w: player.size, h: player.size };
+        }
+
+        function gameLoop() {
+            if(!testMode) return;
+
+            // 1. Movement Logic
+            let moveSpeed = player.speed;
+            
+            // Sneak logic
+            if (keysPressed['shift']) {
+                player.isSneaking = true;
+                moveSpeed = 1.5;
+            } else {
+                player.isSneaking = false;
+            }
+
+            let nextX = player.x;
+            let nextY = player.y;
+
+            if (keysPressed['w']) nextY -= moveSpeed;
+            if (keysPressed['s']) nextY += moveSpeed;
+            if (keysPressed['a']) nextX -= moveSpeed;
+            if (keysPressed['d']) nextX += moveSpeed;
+
+            // 2. Bound Checking
+            if(nextX < 0) nextX = 0;
+            if(nextX > canvas.width - player.size) nextX = canvas.width - player.size;
+            if(nextY < 0) nextY = 0;
+            if(nextY > canvas.height - player.size) nextY = canvas.height - player.size;
+
+            // 3. Collision Detection (Walls & Fences)
+            let pRect = { x: nextX, y: nextY, w: player.size, h: player.size };
+            let collision = false;
+
+            // Check Walls (Tree Walls)
+            for(let wall of walls) {
+                if(wall.active && rectIntersect(pRect, wall)) {
+                    collision = true;
+                }
+            }
+            
+            // Check Fences (Jumpable)
+            for(let fence of fences) {
+                if(rectIntersect(pRect, fence)) {
+                    if (!player.isJumping) {
+                        collision = true;
+                    }
+                }
+            }
+
+            if (!collision) {
+                player.x = nextX;
+                player.y = nextY;
+            }
+
+            // 4. Hazard Logic (Lava & Sneak Zones)
+            let currentRect = getPlayerRect();
+            
+            // Lava Pits
+            for(let pit of pits) {
+                if(!pit.bridged && rectIntersect(currentRect, pit)) {
+                    // Fell in lava!
+                    playBeep(100, 'sawtooth', 0.5);
+                    player.x = 50; // Reset
+                    player.y = 135;
+                    taskMsg.innerText = "Ouch! Hot! Build a bridge first (Right Click).";
+                    taskMsg.style.color = "#e74c3c";
+                }
+            }
+
+            // Sleeping Dragon Zone
+            for(let zone of sneakZones) {
+                if(rectIntersect(currentRect, zone)) {
+                    if(!player.isSneaking) {
+                        // Woke the dragon!
+                        playBeep(600, 'sawtooth', 0.1);
+                        playBeep(500, 'sawtooth', 0.3);
+                        player.x = 410; // Push back
+                        taskMsg.innerText = "Shhh! You woke the guard! Hold SHIFT to Sneak.";
+                        taskMsg.style.color = "#e74c3c";
+                    }
+                }
+            }
+            
+            // Win Condition
+            if(rectIntersect(currentRect, goal)) {
+                testMode = false;
+                createConfetti();
+                winScreen.classList.remove('hidden');
+            }
+            
+            // Jump Animation decay
+            if(player.isJumping) {
+                player.jumpHeight = Math.max(0, player.jumpHeight - 0.5);
+                if(player.jumpHeight <= 0) player.isJumping = false;
+            }
+
+            // Tooltip Logic (Show prompts near obstacles)
+            updateTooltips(currentRect);
+
+            // Render
+            renderTestWorld();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function updateTooltips(pRect) {
+            let shown = false;
+            const check = (obj) => {
+                const dist = Math.abs(obj.x - pRect.x);
+                if(dist < 60 && !shown) {
+                    if(obj.active === false) return; // cleared wall
+                    if(obj.bridged === true) return; // bridged pit
+                    tooltip.style.left = (obj.x + 20) + 'px';
+                    tooltip.style.top = (obj.y + 150) + 'px'; // roughly middle
+                    tooltip.innerText = obj.label;
+                    tooltip.style.display = 'block';
+                    shown = true;
+                }
+            }
+            
+            walls.forEach(check);
+            pits.forEach(check);
+            fences.forEach(check);
+            sneakZones.forEach(check);
+            
+            if(!shown) tooltip.style.display = 'none';
+        }
+
+        function renderTestWorld() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Background
+            ctx.fillStyle = "#7CB342"; 
+            ctx.fillRect(0,0, canvas.width, canvas.height);
+            
+            // Grid
+            ctx.strokeStyle = "rgba(0,0,0,0.1)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for(let i=0; i<canvas.width; i+=40) { ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); }
+            for(let i=0; i<canvas.height; i+=40) { ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); }
+            ctx.stroke();
+
+            // 2. Draw Floor Objects (Pits/Bridges)
+            for(let pit of pits) {
+                if(pit.bridged) {
+                    ctx.fillStyle = "#95a5a6"; // Stone bridge
+                    ctx.fillRect(pit.x, pit.y, pit.w, pit.h);
+                    // Cobblestone detail
+                    ctx.strokeStyle = "#7f8c8d";
+                    ctx.beginPath();
+                    ctx.moveTo(pit.x + 20, 0); ctx.lineTo(pit.x + 20, 300);
+                    ctx.moveTo(pit.x + 40, 0); ctx.lineTo(pit.x + 40, 300);
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = "#cf4a30"; // Lava
+                    ctx.fillRect(pit.x, pit.y, pit.w, pit.h);
+                    // Bubbles
+                    if(Math.random() > 0.9) {
+                        ctx.fillStyle = "#f1c40f";
+                        ctx.fillRect(pit.x + Math.random()*pit.w, Math.random()*pit.h, 4, 4);
+                    }
+                }
+            }
+            
+            // 3. Draw Sneak Zones
+            for(let zone of sneakZones) {
+                ctx.fillStyle = "rgba(0,0,0,0.2)";
+                ctx.fillRect(zone.x, zone.y, zone.w, zone.h);
+                ctx.fillStyle = "#fff";
+                ctx.font = "10px monospace";
+                ctx.fillText("ZZZ...", zone.x + 10, zone.y + 100);
+            }
+
+            // 4. Draw Player
+            // Shadow
+            ctx.fillStyle = "rgba(0,0,0,0.3)";
+            let shadowSize = player.isJumping ? player.size - 5 : player.size;
+            ctx.fillRect(player.x + (player.size-shadowSize)/2, player.y + player.size - 5, shadowSize, 10);
+            
+            // Character Body (with jump offset)
+            let drawY = player.y - (player.isJumping ? 10 : 0);
+            let drawH = player.size;
+            
+            // Squash effect if sneaking
+            if(player.isSneaking) {
+                drawY += 10;
+                drawH -= 10;
+            }
+            
+            drawRobloxPerson(ctx, player.x, drawY, drawH);
+
+            // 5. Draw Walls (Trees)
+            for(let wall of walls) {
+                if(wall.active) {
+                    // Draw Tree trunks
+                    ctx.fillStyle = "#5D4037";
+                    ctx.fillRect(wall.x + 10, 0, 20, 300);
+                    // Leaves
+                    ctx.fillStyle = "#388E3C";
+                    for(let i=0; i<300; i+=40) {
+                        ctx.fillRect(wall.x, i, 40, 35);
+                    }
+                }
+            }
+            
+            // 6. Draw Fences
+            for(let fence of fences) {
+                ctx.fillStyle = "#d35400";
+                ctx.fillRect(fence.x, fence.y, fence.w, fence.h);
+                ctx.fillStyle = "#e67e22";
+                ctx.fillRect(fence.x+5, fence.y, 10, fence.h);
+            }
+
+            // 7. Draw Goal
+            ctx.fillStyle = "#3498DB"; // Diamond block
+            ctx.fillRect(goal.x, goal.y, goal.w, goal.h);
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(goal.x+5, goal.y+5, 5, 5); // Shine
+        }
+        
+        function drawRobloxPerson(ctx, x, y, h) {
+             // Head (Yellow)
+            ctx.fillStyle = "#F1C40F"; 
+            ctx.fillRect(x + 10, y, 10, 10); 
+            
+            // Torso (Blue)
+            ctx.fillStyle = "#3498DB";
+            ctx.fillRect(x + 5, y + 10, 20, 15);
+            
+            // Arms
+            ctx.fillStyle = "#F1C40F";
+            ctx.fillRect(x - 2, y + 10, 6, 15); // L
+            ctx.fillRect(x + 26, y + 10, 6, 15); // R
+            
+            // Legs (Green)
+            ctx.fillStyle = "#2ECC71";
+            ctx.fillRect(x + 5, y + 25, 9, 10);
+            ctx.fillRect(x + 16, y + 25, 9, 10);
+        }
+
+        // --- Event Listeners ---
+
+        document.addEventListener('keydown', (e) => {
+            if(["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1) {
+                e.preventDefault();
+            }
+
+            let key = e.key.toLowerCase();
+            
+            if (testMode) {
+                keysPressed[key] = true;
+                
+                // Jump Logic
+                if (key === ' ' && !player.isJumping) {
+                    player.isJumping = true;
+                    player.jumpHeight = 10;
+                    playJumpSound();
+                }
+                return;
+            }
+
+            // Visual Key Press (Tutorial)
+            let keyId = '';
+            if (e.key === ' ') keyId = 'key-space';
+            else if (e.key === 'Shift') keyId = 'key-shift';
+            else keyId = 'key-' + key;
+
+            const keyEl = document.getElementById(keyId);
+            if (keyEl) {
+                keyEl.classList.add('active');
+                setTimeout(() => keyEl.classList.remove('active'), 150);
+            }
+            handleInput(e.key, 'key');
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (testMode) {
+                keysPressed[e.key.toLowerCase()] = false;
+            }
+        });
+
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // Mouse Move for Tooltips tracking (optional but nice)
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+
+        // Mouse Clicks for Test Mode
+        canvas.addEventListener('mousedown', (e) => {
+            if (!testMode) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            
+            // Check interaction range (simple box check around player)
+            const reach = 80;
+            const pRect = getPlayerRect();
+            
+            if (e.button === 0) { // Left Click (Break)
+                for(let wall of walls) {
+                    if(wall.active && Math.abs(wall.x - pRect.x) < reach) {
+                        wall.active = false;
+                        playBreakSound();
+                        createSmallDebris(wall.x, wall.y + 150, '#5D4037');
+                        taskMsg.innerText = "Timber! Path cleared.";
+                        taskMsg.style.color = "#fff";
+                    }
+                }
+            } else if (e.button === 2) { // Right Click (Build)
+                for(let pit of pits) {
+                    if(!pit.bridged && Math.abs(pit.x - pRect.x) < reach) {
+                        pit.bridged = true;
+                        playBuildSound();
+                        taskMsg.innerText = "Bridge built! Safe to cross.";
+                        taskMsg.style.color = "#fff";
+                    }
+                }
+            }
+        });
+
+        // Mouse for Tutorial
+        document.addEventListener('mousedown', (e) => {
+            if (testMode) return; 
+
+            // 0 = left, 2 = right
+            let btnId = e.button === 0 ? 'mouse-left' : (e.button === 2 ? 'mouse-right' : '');
+            
+            const btnEl = document.getElementById(btnId);
+            if (btnEl) {
+                btnEl.classList.add('active');
+                setTimeout(() => btnEl.classList.remove('active'), 150);
+            }
+            handleInput(e.button, 'mouse');
+        });
+
+        function createConfetti() {
+            for(let i=0; i<50; i++) {
+                const conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                conf.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                document.body.appendChild(conf);
+            }
+        }
+        
+        function createSmallDebris(x, y, color) {
+            // Simple visual effect on canvas
+            ctx.fillStyle = color;
+            for(let i=0; i<5; i++) {
+                ctx.fillRect(x + Math.random()*20, y + Math.random()*20, 5, 5);
+            }
+        }
+
+    </script>
+</body>
+</html>
